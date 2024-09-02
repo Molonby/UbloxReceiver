@@ -162,7 +162,7 @@ public class MainActivity extends Activity {
                 if (bytesRead > 0) {
 
                     // 处理接收到的数据
-                    parseUBX_NAV_POSECEF(buffer, bytesRead);
+                    parseUBX_NAV_POSLLH(buffer, bytesRead);
 
                 } else {
                     runOnUiThread(() -> errorTextView.setText("接收不到数据\n"));
@@ -171,21 +171,23 @@ public class MainActivity extends Activity {
         }).start();
     }
 
-    private void parseUBX_NAV_POSECEF(byte[] data, int length) {
+    private void parseUBX_NAV_POSLLH(byte[] data, int length) {
         // 确保数据符合格式
-        if (length >= 20 && data[0] == (byte) 0xb5 && data[1] == (byte) 0x62 &&
-                data[2] == (byte) 0x01 && data[3] == (byte) 0x01) {
+        if (length >= 28 && data[0] == (byte) 0xb5 && data[1] == (byte) 0x62 &&
+                data[2] == (byte) 0x01 && data[3] == (byte) 0x02) {
 
             // 解析数据
-            int iTOW = byteArrayToInt(data, 6, 4)/1000;
-            double ecefX = byteArrayToInt(data, 10, 4)/100.0;
-            double ecefY = byteArrayToInt(data, 14, 4)/100.0;
-            double ecefZ = byteArrayToInt(data, 18, 4)/100.0;
-            int pAcc = byteArrayToInt(data, 22, 4)/100;
+            int iTOW = byteArrayToInt(data, 6, 4) / 1000; // GPS time of week in seconds
+            double lon = byteArrayToInt(data, 10, 4) / 1e7; // Longitude in degrees
+            double lat = byteArrayToInt(data, 14, 4) / 1e7; // Latitude in degrees
+            double height = byteArrayToInt(data, 18, 4) / 1000.0; // Height in meters
+            double hMSL = byteArrayToInt(data, 22, 4) / 1000.0; // Height above mean sea level in meters
+            int hAcc = byteArrayToInt(data, 26, 4) / 1000; // Horizontal Accuracy in meters
+            int vAcc = byteArrayToInt(data, 30, 4) / 1000; // Vertical Accuracy in meters
 
 
             // 将数据转为字符串
-            String positionData = "iTOW(s): " + iTOW + "\nECEF X(m): " + ecefX + "\nECEF Y(m): " + ecefY + "\nECEF Z(m): " + ecefZ + "\npAcc(m): " + pAcc;
+            String positionData = "iTOW(s): " + iTOW + "\nLongitude(°E): " + lon + "\nLatitude(°N): " + lat + "\nHeight(m): " + hMSL + "\nhAcc(m): " + hAcc + "\nvAcc(m): " + vAcc;
 
             // 更新 UI
             runOnUiThread(() -> {
